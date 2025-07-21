@@ -1,0 +1,314 @@
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import warnings
+warnings.filterwarnings('ignore')
+
+class MovieRecommendationSystem:
+    def __init__(self):
+        self.user_movie_matrix = None
+        self.movie_user_matrix = None
+        self.user_similarity = None
+        self.item_similarity = None
+        self.movies_df = None
+        self.ratings_df = None
+        
+    def load_data(self, ratings_file=None, movies_file=None):
+        """Load movie ratings and movie information data"""
+        if ratings_file and movies_file:
+            self.ratings_df = pd.read_csv(ratings_file)
+            self.movies_df = pd.read_csv(movies_file)
+        else:
+            # Create sample data for demonstration
+            self.create_sample_data()
+        
+        # Create user-movie matrix
+        self.user_movie_matrix = self.ratings_df.pivot(
+            index='userId', columns='movieId', values='rating'
+        ).fillna(0)
+        
+        # Create movie-user matrix (transpose)
+        self.movie_user_matrix = self.user_movie_matrix.T
+        
+        print(f"Data loaded successfully!")
+        print(f"Users: {len(self.user_movie_matrix)}")
+        print(f"Movies: {len(self.movie_user_matrix)}")
+        print(f"Ratings: {len(self.ratings_df)}")
+        
+    def create_sample_data(self):
+        """Create sample movie data for demonstration"""
+        # Sample movies
+        movies_data = {
+            'movieId': range(1, 21),
+            'title': [
+                'Toy Story', 'Jumanji', 'Grumpier Old Men', 'Waiting to Exhale',
+                'Father of the Bride Part II', 'Heat', 'Sabrina', 'Tom and Huck',
+                'Sudden Death', 'GoldenEye', 'American President', 'Dracula: Dead',
+                'Balto', 'Nixon', 'Cutthroat Island', 'Casino', 'Sense and Sensibility',
+                'Four Rooms', 'Ace Ventura', 'Money Train'
+            ],
+            'genres': [
+                'Animation|Children|Comedy', 'Adventure|Children|Fantasy',
+                'Comedy|Romance', 'Comedy|Drama|Romance', 'Comedy',
+                'Action|Crime|Thriller', 'Comedy|Romance', 'Adventure|Children',
+                'Action', 'Action|Adventure|Thriller', 'Comedy|Drama|Romance',
+                'Comedy|Horror', 'Animation|Children', 'Drama', 'Action|Adventure',
+                'Crime|Drama', 'Drama|Romance', 'Thriller', 'Comedy', 'Action|Drama'
+            ]
+        }
+        
+        # Sample ratings
+        np.random.seed(42)
+        users = range(1, 101)  # 100 users
+        movies = range(1, 21)  # 20 movies
+        
+        ratings_data = []
+        for user in users:
+            # Each user rates 5-15 random movies
+            num_ratings = np.random.randint(5, 16)
+            user_movies = np.random.choice(movies, num_ratings, replace=False)
+            for movie in user_movies:
+                rating = np.random.choice([1, 2, 3, 4, 5], p=[0.1, 0.1, 0.2, 0.3, 0.3])
+                ratings_data.append({
+                    'userId': user,
+                    'movieId': movie,
+                    'rating': rating
+                })
+        
+        self.movies_df = pd.DataFrame(movies_data)
+        self.ratings_df = pd.DataFrame(ratings_data)
+    
+    def calculate_user_similarity(self):
+        """Calculate user-user similarity using cosine similarity"""
+        # Replace zeros with NaN for similarity calculation
+        user_matrix_for_sim = self.user_movie_matrix.replace(0, np.nan)
+        
+        # Fill NaN with user's mean rating
+        user_matrix_filled = user_matrix_for_sim.T.fillna(user_matrix_for_sim.mean(axis=1)).T
+        
+        # Calculate cosine similarity
+        self.user_similarity = cosine_similarity(user_matrix_filled)
+        self.user_similarity = pd.DataFrame(
+            self.user_similarity, 
+            index=self.user_movie_matrix.index, 
+            columns=self.user_movie_matrix.index
+        )
+        
+        print("User similarity matrix calculated!")
+        
+    def calculate_item_similarity(self):
+        """Calculate item-item similarity using cosine similarity"""
+        # Replace zeros with NaN for similarity calculation
+        item_matrix_for_sim = self.movie_user_matrix.replace(0, np.nan)
+        
+        # Fill NaN with movie's mean rating
+        item_matrix_filled = item_matrix_for_sim.T.fillna(item_matrix_for_sim.mean(axis=1)).T
+        
+        # Calculate cosine similarity
+        self.item_similarity = cosine_similarity(item_matrix_filled)
+        self.item_similarity = pd.DataFrame(
+            self.item_similarity,
+            index=self.movie_user_matrix.index,
+            columns=self.movie_user_matrix.index
+        )
+        
+        print("Item similarity matrix calculated!")
+    
+    def get_user_based_recommendations(self, user_id, num_recommendations=5):
+        """Generate recommendations using user-based collaborative filtering"""
+        if self.user_similarity is None:
+            self.calculate_user_similarity()
+            
+        if user_id not in self.user_movie_matrix.index:
+            return f"User {user_id} not found in the dataset"
+        
+        # Get similar users
+        user_similarities = self.user_similarity[user_id].drop(user_id).sort_values(ascending=False)
+        
+        # Get movies not rated by target user
+        user_ratings = self.user_movie_matrix.loc[user_id]
+        unrated_movies = user_ratings[user_ratings == 0].index
+        
+        # Calculate predicted ratings for unrated movies
+        recommendations = []
+        
+        for movie in unrated_movies:
+            # Get users who rated this movie
+            movie_raters = self.user_movie_matrix[self.user_movie_matrix[movie] > 0][movie]
+            
+            if len(movie_raters) == 0:
+                continue
+                
+            # Calculate weighted average rating
+            numerator = 0
+            denominator = 0
+            
+            for similar_user in user_similarities.index[:50]:  # Top 50 similar users
+                if similar_user in movie_raters.index:
+                    similarity = user_similarities[similar_user]
+                    rating = movie_raters[similar_user]
+                    numerator += similarity * rating
+                    denominator += abs(similarity)
+            
+            if denominator > 0:
+                predicted_rating = numerator / denominator
+                movie_title = self.movies_df[self.movies_df['movieId'] == movie]['title'].iloc[0]
+                recommendations.append((movie, movie_title, predicted_rating))
+        
+        # Sort by predicted rating and return top recommendations
+        recommendations.sort(key=lambda x: x[2], reverse=True)
+        return recommendations[:num_recommendations]
+    
+    def get_item_based_recommendations(self, user_id, num_recommendations=5):
+        """Generate recommendations using item-based collaborative filtering"""
+        if self.item_similarity is None:
+            self.calculate_item_similarity()
+            
+        if user_id not in self.user_movie_matrix.index:
+            return f"User {user_id} not found in the dataset"
+        
+        # Get user's ratings
+        user_ratings = self.user_movie_matrix.loc[user_id]
+        rated_movies = user_ratings[user_ratings > 0]
+        unrated_movies = user_ratings[user_ratings == 0].index
+        
+        # Calculate predicted ratings for unrated movies
+        recommendations = []
+        
+        for movie in unrated_movies:
+            # Calculate weighted average based on item similarity
+            numerator = 0
+            denominator = 0
+            
+            for rated_movie in rated_movies.index:
+                similarity = self.item_similarity.loc[movie, rated_movie]
+                rating = rated_movies[rated_movie]
+                numerator += similarity * rating
+                denominator += abs(similarity)
+            
+            if denominator > 0:
+                predicted_rating = numerator / denominator
+                movie_title = self.movies_df[self.movies_df['movieId'] == movie]['title'].iloc[0]
+                recommendations.append((movie, movie_title, predicted_rating))
+        
+        # Sort by predicted rating and return top recommendations
+        recommendations.sort(key=lambda x: x[2], reverse=True)
+        return recommendations[:num_recommendations]
+    
+    def evaluate_model(self, test_size=0.2):
+        """Evaluate the recommendation system using RMSE"""
+        # Split data into train and test
+        train_data, test_data = train_test_split(
+            self.ratings_df, test_size=test_size, random_state=42
+        )
+        
+        # Create training matrix
+        train_matrix = train_data.pivot(
+            index='userId', columns='movieId', values='rating'
+        ).fillna(0)
+        
+        # Calculate similarities on training data
+        temp_matrix = self.user_movie_matrix
+        self.user_movie_matrix = train_matrix
+        self.calculate_user_similarity()
+        
+        # Predict ratings for test set
+        predictions = []
+        actual = []
+        
+        for _, row in test_data.iterrows():
+            user_id = row['userId']
+            movie_id = row['movieId']
+            actual_rating = row['rating']
+            
+            if user_id in self.user_similarity.index:
+                # Predict using user-based CF
+                user_similarities = self.user_similarity[user_id].drop(user_id)
+                movie_raters = train_matrix[train_matrix[movie_id] > 0][movie_id]
+                
+                numerator = 0
+                denominator = 0
+                
+                for similar_user in user_similarities.index:
+                    if similar_user in movie_raters.index:
+                        similarity = user_similarities[similar_user]
+                        rating = movie_raters[similar_user]
+                        numerator += similarity * rating
+                        denominator += abs(similarity)
+                
+                if denominator > 0:
+                    predicted_rating = numerator / denominator
+                    predictions.append(predicted_rating)
+                    actual.append(actual_rating)
+        
+        # Restore original matrix
+        self.user_movie_matrix = temp_matrix
+        
+        if len(predictions) > 0:
+            rmse = np.sqrt(mean_squared_error(actual, predictions))
+            print(f"RMSE: {rmse:.4f}")
+            return rmse
+        else:
+            print("No predictions could be made")
+            return None
+    
+    def get_movie_info(self, movie_id):
+        """Get movie information"""
+        movie_info = self.movies_df[self.movies_df['movieId'] == movie_id]
+        if not movie_info.empty:
+            return movie_info.iloc[0].to_dict()
+        return None
+    
+    def display_recommendations(self, user_id, method='both'):
+        """Display recommendations in a formatted way"""
+        print(f"\n{'='*60}")
+        print(f"MOVIE RECOMMENDATIONS FOR USER {user_id}")
+        print(f"{'='*60}")
+        
+        if method in ['both', 'user']:
+            print("\n🎬 USER-BASED COLLABORATIVE FILTERING:")
+            print("-" * 40)
+            user_recs = self.get_user_based_recommendations(user_id)
+            if isinstance(user_recs, str):
+                print(user_recs)
+            else:
+                for i, (movie_id, title, rating) in enumerate(user_recs, 1):
+                    print(f"{i}. {title} (Predicted Rating: {rating:.2f})")
+        
+        if method in ['both', 'item']:
+            print("\n🎭 ITEM-BASED COLLABORATIVE FILTERING:")
+            print("-" * 40)
+            item_recs = self.get_item_based_recommendations(user_id)
+            if isinstance(item_recs, str):
+                print(item_recs)
+            else:
+                for i, (movie_id, title, rating) in enumerate(item_recs, 1):
+                    print(f"{i}. {title} (Predicted Rating: {rating:.2f})")
+
+# Example usage
+if __name__ == "__main__":
+    # Initialize the recommendation system
+    recommender = MovieRecommendationSystem()
+    
+    # Load data (using sample data for demonstration)
+    recommender.load_data()
+    
+    # Example: Get recommendations for user 1
+    recommender.display_recommendations(user_id=1, method='both')
+    
+    # Evaluate the model
+    print(f"\n{'='*60}")
+    print("MODEL EVALUATION")
+    print(f"{'='*60}")
+    recommender.evaluate_model()
+    
+    # Example: Get movie information
+    print(f"\n{'='*60}")
+    print("MOVIE INFORMATION LOOKUP")
+    print(f"{'='*60}")
+    movie_info = recommender.get_movie_info(1)
+    if movie_info:
+        print(f"Movie: {movie_info['title']}")
+        print(f"Genres: {movie_info['genres']}")

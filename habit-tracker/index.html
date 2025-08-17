@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Habit Tracker</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+	<header class="app-header">
+		<h1>Habit Tracker</h1>
+		<div class="header-actions">
+			<button id="prev-week" aria-label="Previous week">◀</button>
+			<div id="week-label" aria-live="polite"></div>
+			<button id="next-week" aria-label="Next week">▶</button>
+		</div>
+	</header>
+
+	<main class="container">
+		<section class="controls" aria-labelledby="controls-heading">
+			<h2 id="controls-heading" class="sr-only">Controls</h2>
+			<div class="add-habit">
+				<input id="new-habit-input" type="text" placeholder="Add a habit (e.g., Drink water)" />
+				<button id="add-habit-btn">Add</button>
+			</div>
+			<div class="io">
+				<button id="export-btn">Export</button>
+				<label for="import-input" class="import-label">Import</label>
+				<input id="import-input" type="file" accept="application/json" />
+			</div>
+		</section>
+
+		<section class="grid" aria-labelledby="grid-heading">
+			<h2 id="grid-heading" class="sr-only">Habits grid</h2>
+			<div class="grid-header">
+				<div class="col habit-col">Habit</div>
+				<div class="col day-col">Mon</div>
+				<div class="col day-col">Tue</div>
+				<div class="col day-col">Wed</div>
+				<div class="col day-col">Thu</div>
+				<div class="col day-col">Fri</div>
+				<div class="col day-col">Sat</div>
+				<div class="col day-col">Sun</div>
+				<div class="col streak-col" title="Current streak">Streak</div>
+			</div>
+			<div id="grid-body" class="grid-body"></div>
+		</section>
+	</main>
+
+	<footer class="app-footer">
+		<div>
+			<a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT</a> · Built with ❤️
+		</div>
+	</footer>
+
+	<script src="script.js"></script>
+</body>
+</html>

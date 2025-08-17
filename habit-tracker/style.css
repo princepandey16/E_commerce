@@ -1,0 +1,193 @@
+/*
+	Habit Tracker Styles
+*/
+
+:root {
+	--bg: #0b0f16;
+	--panel: #121826;
+	--panel-alt: #0e1420;
+	--text: #e6eefc;
+	--muted: #98a2b3;
+	--primary: #7c3aed;
+	--primary-700: #6d28d9;
+	--success: #22c55e;
+	--danger: #ef4444;
+	--border: #1f2937;
+	--day-bg: #0f1623;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+	margin: 0;
+	font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+	background: radial-gradient(1200px 600px at 80% -10%, rgba(124, 58, 237, 0.18), transparent 60%),
+		linear-gradient(180deg, #0b0f16 0%, #0b0f16 100%);
+	color: var(--text);
+}
+
+.sr-only { position: absolute; left: -9999px; }
+
+.app-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--border);
+	background: linear-gradient(180deg, var(--panel) 0%, var(--panel-alt) 100%);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.app-header h1 {
+	margin: 0;
+	font-weight: 700;
+	font-size: 18px;
+	letter-spacing: 0.3px;
+}
+
+.header-actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.header-actions button {
+	border: 1px solid var(--border);
+	background: var(--panel);
+	color: var(--text);
+	padding: 6px 10px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+#week-label { font-weight: 600; font-size: 14px; }
+
+.container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.add-habit { display: flex; gap: 8px; align-items: center; }
+
+.add-habit input {
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	padding: 10px 12px;
+	min-width: 280px;
+	color: var(--text);
+}
+
+.add-habit button, .io button, .import-label {
+	background: var(--primary);
+	border: 1px solid var(--primary-700);
+	color: white;
+	border-radius: 10px;
+	padding: 10px 14px;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.io { display: flex; gap: 8px; align-items: center; }
+
+#import-input { display: none; }
+
+.grid {
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	overflow: hidden;
+	background: var(--panel);
+	box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.grid-header, .grid-row {
+	display: grid;
+	grid-template-columns: 1.4fr repeat(7, 1fr) 0.7fr;
+	gap: 0;
+}
+
+.grid-header {
+	background: linear-gradient(180deg, var(--panel) 0%, var(--panel-alt) 100%);
+	border-bottom: 1px solid var(--border);
+	font-weight: 600;
+	color: var(--muted);
+}
+
+.grid-header .col, .grid-row .cell {
+	padding: 12px 10px;
+	border-right: 1px solid var(--border);
+}
+
+.grid-header .col:last-child, .grid-row .cell:last-child { border-right: none; }
+
+.grid-body .grid-row:nth-child(odd) { background: var(--day-bg); }
+
+.habit-col { display: flex; align-items: center; gap: 10px; }
+
+.habit-name-input {
+	background: transparent;
+	border: none;
+	color: var(--text);
+	font-weight: 500;
+	padding: 6px 8px;
+	border-radius: 8px;
+	outline: none;
+	width: 100%;
+}
+
+.habit-actions { display: flex; gap: 8px; }
+.habit-actions button {
+	background: transparent;
+	border: 1px solid var(--border);
+	color: var(--muted);
+	border-radius: 8px;
+	padding: 6px 8px;
+	cursor: pointer;
+}
+
+.day-toggle {
+	width: 100%;
+	height: 36px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--muted);
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.day-toggle.done {
+	background: rgba(34,197,94,0.1);
+	border-color: rgba(34,197,94,0.6);
+	color: var(--success);
+	font-weight: 600;
+}
+
+.streak-col { text-align: center; }
+.streak {
+	background: rgba(124,58,237,0.12);
+	border: 1px solid rgba(124,58,237,0.4);
+	color: #c4b5fd;
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-weight: 600;
+}
+
+.app-footer { text-align: center; color: var(--muted); padding: 18px; }
+
+@media (max-width: 860px) {
+	.grid-header, .grid-row {
+		grid-template-columns: 1.2fr repeat(7, 0.8fr) 0.6fr;
+	}
+	.add-habit input { min-width: 220px; }
+}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+	<div class="col-lg-6">
+		<h2 class="mb-3">Your habits</h2>
+		{% if habits %}
+			<ul class="list-group mb-4">
+				{% for vm in habits %}
+					<li class="list-group-item d-flex align-items-center justify-content-between">
+						<div>
+							<a href="{{ url_for('habit_detail', habit_id=vm.habit.id) }}" class="fw-semibold text-decoration-none">{{ vm.habit.name }}</a>
+							<div class="text-muted small">Streak: {{ vm.streak }} day{{ '' if vm.streak == 1 else 's' }}</div>
+						</div>
+						<form method="post" action="{{ url_for('toggle_today', habit_id=vm.habit.id) }}">
+							<button class="btn btn-sm {{ 'btn-success' if vm.today_done else 'btn-outline-secondary' }}" type="submit">
+								{{ 'Checked today' if vm.today_done else 'Check today' }}
+							</button>
+						</form>
+					</li>
+				{% endfor %}
+			</ul>
+		{% else %}
+			<p class="text-muted">No habits yet. Create your first below.</p>
+		{% endif %}
+	</div>
+
+	<div class="col-lg-6">
+		<h2 class="mb-3">New habit</h2>
+		<form method="post" action="{{ url_for('create_habit') }}" class="card card-body">
+			<div class="mb-3">
+				<label class="form-label">Name</label>
+				<input class="form-control" name="name" placeholder="e.g., Drink water" required />
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Description</label>
+				<textarea class="form-control" name="description" rows="2" placeholder="Optional"></textarea>
+			</div>
+			<button class="btn btn-primary" type="submit">Create</button>
+		</form>
+	</div>
+</div>
+{% endblock %}

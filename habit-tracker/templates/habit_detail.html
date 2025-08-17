@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+	<h2 class="mb-0">{{ habit.name }}</h2>
+	<div class="d-flex gap-2">
+		<form method="post" action="{{ url_for('toggle_today', habit_id=habit.id) }}">
+			<button class="btn btn-sm btn-success" type="submit">
+				{% if checked_today %}Checked today{% else %}Check today{% endif %}
+			</button>
+		</form>
+		<form method="post" action="{{ url_for('archive_habit', habit_id=habit.id) }}" onsubmit="return confirm('Archive this habit?')">
+			<button class="btn btn-sm btn-outline-secondary" type="submit">Archive</button>
+		</form>
+		<form method="post" action="{{ url_for('delete_habit', habit_id=habit.id) }}" onsubmit="return confirm('Delete this habit and all check-ins?')">
+			<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+		</form>
+	</div>
+</div>
+<p class="text-muted">{{ habit.description }}</p>
+
+<div class="card mb-4">
+	<div class="card-body">
+		<div class="d-flex flex-wrap gap-2">
+			{% for d in days %}
+				<div class="day-box {{ 'checked' if d.checked else '' }}" title="{{ d.date }}">
+					{{ d.date.day }}
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+</div>
+
+<div class="mb-3">
+	<span class="badge text-bg-primary">Streak: {{ streak }}</span>
+</div>
+
+<a class="btn btn-link" href="{{ url_for('index') }}">← Back</a>
+{% endblock %}

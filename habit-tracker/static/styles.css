@@ -1,0 +1,17 @@
+.day-box {
+	height: 36px;
+	width: 36px;
+	border-radius: 6px;
+	border: 1px solid #dee2e6;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.9rem;
+	background: #f8f9fa;
+}
+
+.day-box.checked {
+	background: #198754;
+	color: white;
+	border-color: #198754;
+}
